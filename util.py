@@ -104,11 +104,11 @@ def clearc():
     os.system("cls" if os.name == "nt" else "clear")
 
 
-def fprint(text, color="light_magenta", clear=True):  # STANDS FOR FANCY PRINT
+def fprint(text, color="light_magenta", clear=True, select=False):  # STANDS FOR FANCY PRINT
     if clear:
         clearc()
     print("---")
-    tprint(text, color)
+    tprint(text, color, not select)
     # print("")
 
 

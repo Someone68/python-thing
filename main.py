@@ -2,14 +2,10 @@ import time
 import random
 from termcolor import colored, cprint
 from util import tprint, tinput, fprint, finput, clearc
-from simple_term_menu import TerminalMenu
 from ship import Ship
 
 
-def select(options):
-    terminal_menu = TerminalMenu(options, menu_highlight_style=("underline",))
-    menu_entry_index = terminal_menu.show()
-    return options[menu_entry_index]
+
 
 def main():
     global ship
@@ -24,6 +20,21 @@ def main():
         ship.cycle += 1
         consumed = ship.calc_resources()
         ship.print_stats()
-
+        if(random.randint(1,5) > 1):
+            ship.random_event()
         fprint(f":: In this cycle:\n:: - {consumed['energy_used']} energy consumed.\n:: - {consumed['food_consumed']} food eaten.\n:: - Traveled {consumed['travel_dist']}ly.", "light_blue", False)
+    if(ship.is_alive()):
+        clearc()
+        cprint("""==================
+ Mission Complete
+==================""", "light_green")
+        input()
+        fprint("You successfully arrived at the Stellaris Rift. Ty for playing bye")
+    else:
+        clearc()
+        cprint("""===========
+ GAME OVER
+===========""", "light_red")
+        input()
+        fprint("nice try")
 main()
