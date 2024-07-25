@@ -20,9 +20,12 @@ def main():
         ship.cycle += 1
         consumed = ship.calc_resources()
         ship.print_stats()
-        if(random.randint(1,5) > 1):
+        if(random.randint(1,5) > 1 or ship.energy < 20):
             ship.random_event()
-        fprint(f":: In this cycle:\n:: - {consumed['energy_used']} energy consumed.\n:: - {consumed['food_consumed']} food eaten.\n:: - Traveled {consumed['travel_dist']}ly.", "light_blue", False)
+        fprint(f":: In this cycle:", "light_blue", False, True)
+        tprint(f":: - {consumed['energy_used']} energy consumed.", pause=False, color="light_blue")
+        tprint(f":: - {consumed['food_consumed']} food eaten.", pause=False, color="light_blue")
+        tprint(f":: - Traveled {consumed['travel_dist']}ly.", pause=True, color="light_blue")
     if(ship.is_alive()):
         clearc()
         cprint("""==================

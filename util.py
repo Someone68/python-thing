@@ -4,27 +4,46 @@ from termcolor import colored, cprint
 import os
 import sys
 import select
-import termios
-import tty
+import curses
+
+if sys.platform.startswith('win'):
+    import msvcrt
+else:
+    import termios
+    import tty
 
 
 def tprint(words, color, pause=True):
     skip_animation = False
 
-    # Save the terminal settings
-    fd = sys.stdin.fileno()
-    old_settings = termios.tcgetattr(fd)
+    if sys.platform.startswith('win'):
+        get_char = msvcrt.getch
+    else:
+        # Save the terminal settings
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        def get_char():
+            return sys.stdin.read(1)
 
     try:
-        # Set the terminal to raw mode
-        tty.setcbreak(fd)
+        if not sys.platform.startswith('win'):
+            # Set the terminal to raw mode
+            tty.setcbreak(fd)
 
         for char in words:
-            if sys.stdin in select.select([sys.stdin], [], [], 0.05)[0]:
-                key = sys.stdin.read(1)
-                if key == "\n":  # Check for Enter key
-                    skip_animation = True
-                    break
+            if sys.platform.startswith('win'):
+                if msvcrt.kbhit():
+                    key = msvcrt.getch().decode('utf-8')
+                    if key == "\r":  # Check for Enter key
+                        skip_animation = True
+                        break
+            else:
+                if sys.stdin in select.select([sys.stdin], [], [], 0.05)[0]:
+                    key = sys.stdin.read(1)
+                    if key == "\n":  # Check for Enter key
+                        skip_animation = True
+                        break
+
             colored_char = colored(char, color)
             sys.stdout.write(colored_char)
 
@@ -32,9 +51,9 @@ def tprint(words, color, pause=True):
             if char == ",":
                 sleep_time = 0.2
             elif char in ".!?":
-                sleep_time = 0.7
+                sleep_time = 0.4
             else:
-                sleep_time = 0.01  # Adjusted to 0.05 to be noticeable
+                sleep_time = 0.035  # Adjusted to 0.05 to be noticeable
 
             sys.stdout.flush()
             time.sleep(sleep_time)
@@ -47,30 +66,45 @@ def tprint(words, color, pause=True):
             sys.stdout.write(colored(words, color))
             sys.stdout.flush()
     finally:
-        # Restore the terminal settings
-        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        if not sys.platform.startswith('win'):
+            # Restore the terminal settings
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+
     if pause:
         input()
     print()  # Move to the next line after printing
 
-
 def tinput(words, color, pause=True):
     skip_animation = False
 
-    # Save the terminal settings
-    fd = sys.stdin.fileno()
-    old_settings = termios.tcgetattr(fd)
+    if sys.platform.startswith('win'):
+        get_char = msvcrt.getch
+    else:
+        # Save the terminal settings
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        def get_char():
+            return sys.stdin.read(1)
 
     try:
-        # Set the terminal to raw mode
-        tty.setcbreak(fd)
+        if not sys.platform.startswith('win'):
+            # Set the terminal to raw mode
+            tty.setcbreak(fd)
 
         for char in words:
-            if sys.stdin in select.select([sys.stdin], [], [], 0.05)[0]:
-                key = sys.stdin.read(1)
-                if key == "\n":  # Check for Enter key
-                    skip_animation = True
-                    break
+            if sys.platform.startswith('win'):
+                if msvcrt.kbhit():
+                    key = msvcrt.getch().decode('utf-8')
+                    if key == "\r":  # Check for Enter key
+                        skip_animation = True
+                        break
+            else:
+                if sys.stdin in select.select([sys.stdin], [], [], 0.05)[0]:
+                    key = sys.stdin.read(1)
+                    if key == "\n":  # Check for Enter key
+                        skip_animation = True
+                        break
+
             colored_char = colored(char, color)
             sys.stdout.write(colored_char)
 
@@ -78,9 +112,9 @@ def tinput(words, color, pause=True):
             if char == ",":
                 sleep_time = 0.2
             elif char in ".!?:":
-                sleep_time = 0.37
+                sleep_time = 0.4
             else:
-                sleep_time = 0.005
+                sleep_time = 0.035
 
             sys.stdout.flush()
             time.sleep(sleep_time)
@@ -93,11 +127,14 @@ def tinput(words, color, pause=True):
             sys.stdout.write(colored(words, color))
             sys.stdout.flush()
     finally:
-        # Restore the terminal settings
-        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        if not sys.platform.startswith('win'):
+            # Restore the terminal settings
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+
     if pause:
         return input(colored(" > ", color))
     print()  # Move to the next line after printing
+
 
 
 def clearc():
@@ -167,3 +204,100 @@ def input_():
             break
         sys.stdout.flush()
     return response
+
+class Enemy_Ship:
+    def __init__(self, max_health, max_shield, damage) -> None:
+        self.max_health = max_health
+        self.health = max_health
+        self.max_shield = max_shield
+        self.shield = max_shield
+        self.damage = damage
+
+
+
+
+
+def draw_bar(stdscr, cursor_pos, bar_width, bar_start_x):
+    stdscr.clear()
+    h, w = stdscr.getmaxyx()
+    bar_y = h // 2
+
+    # Draw the bar
+    stdscr.addstr(bar_y+3, bar_start_x-1, '(press space when X reaches the center)', curses.color_pair(1))
+    stdscr.addstr(bar_y+1, bar_start_x-1, '╚', curses.color_pair(1))
+    stdscr.addstr(bar_y, bar_start_x-1, '║', curses.color_pair(1))
+    stdscr.addstr(bar_y-1, bar_start_x-1, '╔', curses.color_pair(1))
+    stdscr.addstr(bar_y+1, bar_start_x+bar_width, '╝', curses.color_pair(1))
+    stdscr.addstr(bar_y, bar_start_x+bar_width, '║', curses.color_pair(1))
+    stdscr.addstr(bar_y-1, bar_start_x+bar_width, '╗', curses.color_pair(1))
+
+    for i in range(bar_width):
+        if bar_start_x + i == w // 2 or bar_start_x + i == w // 2 - 1 or bar_start_x + i == w // 2 + 1:  # Center of the bar
+            stdscr.addstr(bar_y+1, bar_start_x + i, '═', curses.color_pair(2))
+            stdscr.addstr(bar_y, bar_start_x + i, '|', curses.color_pair(2))
+            stdscr.addstr(bar_y-1, bar_start_x + i, '═', curses.color_pair(2))
+        else:
+            stdscr.addstr(bar_y+1, bar_start_x + i, '═', curses.color_pair(1))
+            stdscr.addstr(bar_y, bar_start_x + i, '|', curses.color_pair(1))
+            stdscr.addstr(bar_y-1, bar_start_x + i, '═', curses.color_pair(1))
+
+    # Draw the cursor
+    cursor_x = bar_start_x + cursor_pos
+    stdscr.addstr(bar_y, cursor_x, '|', curses.color_pair(3))
+    stdscr.refresh()
+
+def main(stdscr):
+    curses.curs_set(0)
+    curses.start_color()
+    curses.use_default_colors()
+    curses.init_pair(1, curses.COLOR_WHITE, -1)  # Default background
+    curses.init_pair(2, curses.COLOR_YELLOW, -1) 
+
+    if curses.COLORS >= 256:
+        # Define a gray background if the terminal supports 256 colors
+        curses.init_color(8, 300, 300, 300)  # Define a gray color
+        curses.init_pair(3, curses.COLOR_RED, 8)  # Red foreground, gray background
+        
+    else:
+        curses.init_pair(3, curses.COLOR_RED, curses.COLOR_BLACK)  # Fallback to black background
+
+    stdscr.nodelay(1)  # Make getch() non-blocking
+
+    bar_width = 21
+    cursor_speed = 0.035
+    cursor_direction = 1  # 1 for right, -1 for left
+    cursor_pos = 0
+
+    h, w = stdscr.getmaxyx()
+    bar_start_x = w // 2 - bar_width // 2
+    
+    draw_bar(stdscr, cursor_pos, bar_width, bar_start_x)
+
+    time.sleep(0.7)
+    while True:
+        key = stdscr.getch()
+
+        
+        if key == ord(' '):  # Space bar pressed
+            time.sleep(1)
+            stdscr.refresh()
+            stdscr.getch()
+            return cursor_pos
+
+        # Recalculate bar start position if window size changes
+        new_h, new_w = stdscr.getmaxyx()
+        if new_w != w:
+            w = new_w
+            bar_start_x = w // 2 - bar_width // 2
+
+        draw_bar(stdscr, cursor_pos, bar_width, bar_start_x)
+        cursor_pos += cursor_direction
+
+        if cursor_pos >= bar_width or cursor_pos < 0:
+            cursor_direction *= -1  # Change direction
+            cursor_pos += cursor_direction
+
+        time.sleep(cursor_speed)
+
+def bar():
+    return curses.wrapper(main)
