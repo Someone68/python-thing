@@ -3,14 +3,45 @@ import random
 from termcolor import colored, cprint
 from util import tprint, tinput, fprint, finput, clearc
 from ship import Ship
+import datetime
+import sys
 
 
+
+
+def test():
+    clearc()
+    cprint("Testing your terminal's speed...", "light_magenta")
+    time.sleep(1)
+    words = "testing..."
+    start = datetime.datetime.now()
+    stop = start + datetime.timedelta(0,2.7)
+    failed = False
+    for char in words:
+            if(datetime.datetime.now() > stop):
+                fprint("Speed test FAILED", "red")
+                choice = input("Terminal is not fast enough for this game! Do you want to [c]ontinue (not recommended for the best experience) or [e]xit?").lower()
+                if(choice == "c" or choice == "continue"):
+                    fprint("Continuing...", select=True)
+                else:
+                    cprint("Good choice, try freeing up your memory, your terminal is slow.")
+                    quit()
+                break
+            colored_char = char
+            sys.stdout.write(colored_char)
+            sleep_time = 0.1
+
+            sys.stdout.flush()
+            time.sleep(sleep_time)
+    if(not failed):
+        fprint("PASSED!")
+test()
 
 
 def main():
     global ship
     clearc()
-    cprint("(Press enter to skip/proceed)", "grey")
+    cprint("(Press enter to skip/proceed)", "light_grey")
     fprint("Welcome Captain. We are ready to depart and head to the Stellaris Rift.", "light_magenta", False)
     ship = Ship(finput("Before departure, name the ship", "light_green", False))
     fprint("Excellent, let's begin.")
