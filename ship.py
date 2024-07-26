@@ -41,11 +41,11 @@ class Ship:
         self.damage = round(self.damage, 2)
         if(self.energy > self.max_energy):
             self.energy = self.max_energy
-        cprint("(Press enter to proceed)\n", "grey")
+        cprint("(Press enter to proceed)\n", "light_grey")
         cprint("="*45, "grey")
         header = f"Cycle {self.cycle}"
-        cprint(f"{header:^45s}", "grey")
-        cprint("="*45, "grey")
+        cprint(f"{header:^45s}", "light_magenta")
+        cprint("="*45, "light_grey")
         if(self.energy < 15):
             cprint("  WARNING: ENERGY CRITICALLY LOW  ", "black", "on_light_red")
         elif(self.energy < 25):
