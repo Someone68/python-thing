@@ -5,6 +5,7 @@ import os
 import sys
 import select
 import curses
+from threading import Thread, Event
 
 if sys.platform.startswith('win'):
     import msvcrt
@@ -13,61 +14,72 @@ else:
     import tty
 
 
-def tprint(words, color, pause=True):
-    skip_animation = False
-
+def input_thread(stop_event):
+    """Thread to monitor user input."""
     if sys.platform.startswith('win'):
+        while not stop_event.is_set():
+            if msvcrt.kbhit():
+                key = msvcrt.getch().decode('utf-8')
+                if key in ["\r", "\n"]:
+                    stop_event.set()
+    else:
+        while not stop_event.is_set():
+            if select.select([sys.stdin], [], [], 0.05)[0]:
+                key = sys.stdin.read(1)
+                if key in ["\r", "\n"]:
+                    stop_event.set()
+
+def tprint(words, color, pause=True):
+    stop_event = Event()
+    thread = Thread(target=input_thread, args=(stop_event,))
+    thread.start()
+
+    platform = sys.platform
+    raw_mode = False
+
+    # Platform-specific setup
+    if platform.startswith('win'):
         get_char = msvcrt.getch
     else:
-        # Save the terminal settings
         fd = sys.stdin.fileno()
         old_settings = termios.tcgetattr(fd)
+        raw_mode = True
+
         def get_char():
             return sys.stdin.read(1)
 
     try:
-        if not sys.platform.startswith('win'):
-            # Set the terminal to raw mode
+        if raw_mode:
             tty.setcbreak(fd)
 
-        for char in words:
-            if sys.platform.startswith('win'):
-                if msvcrt.kbhit():
-                    key = msvcrt.getch().decode('utf-8')
-                    if key == "\r":  # Check for Enter key
-                        skip_animation = True
-                        break
-            else:
-                if sys.stdin in select.select([sys.stdin], [], [], 0.05)[0]:
-                    key = sys.stdin.read(1)
-                    if key == "\n":  # Check for Enter key
-                        skip_animation = True
-                        break
+        for i, char in enumerate(words):
+            # Check for input every character to allow immediate response
+            if stop_event.is_set():
+                break
 
             colored_char = colored(char, color)
             sys.stdout.write(colored_char)
 
-            # Check for punctuation and set sleep time accordingly
-            if char == ",":
-                sleep_time = 0.2
-            elif char in ".!?":
-                sleep_time = 0.4
-            else:
-                sleep_time = 0.035  # Adjusted to 0.05 to be noticeable
+            # Adjust sleep time based on punctuation
+            sleep_time = {
+                ',': 0.36,
+                '.': 0.47,
+                '!': 0.47,
+                '?': 0.47
+            }.get(char, 0.03)
 
             sys.stdout.flush()
-            time.sleep(sleep_time)
+            if not stop_event.is_set():
+                time.sleep(sleep_time)  # Sleep only if no input was detected
 
-        if skip_animation:
-            # Clear the current line
+        if stop_event.is_set():
+            # Clear and overwrite the line if animation is skipped
             sys.stdout.write("\r" + " " * len(words) + "\r")
             sys.stdout.flush()
-            # Print the full text
             sys.stdout.write(colored(words, color))
             sys.stdout.flush()
     finally:
-        if not sys.platform.startswith('win'):
-            # Restore the terminal settings
+        if raw_mode:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
     if pause:
