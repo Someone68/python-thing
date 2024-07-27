@@ -29,13 +29,19 @@ def test():
                 break
             colored_char = char
             sys.stdout.write(colored_char)
-            sleep_time = 0.1
+            sleep_time = 0.15
 
             sys.stdout.flush()
             time.sleep(sleep_time)
     if(not failed):
-        fprint("PASSED!")
-test()
+        fprint("Speed test passed!")
+
+
+# set to true
+should_check_speed = True
+
+if(should_check_speed):
+  test()
 
 
 def main():

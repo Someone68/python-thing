@@ -141,7 +141,7 @@ def food_station(ship):
               ship.credits -= cost
               ship.food += int(remove_ansi(buy).split(" ")[0].replace("x", ""))
               fprint("Bought. Do you want to buy anything else or exit?", color="light_green", clear=False, select=True)
-              if(select(["YES", "NO"]) == "NO"):
+              if(select(["BUY", "EXIT"]) == "NO"):
                   break
           else:
               fprint("Not enough credits!", color="light_red", clear=False)
@@ -252,6 +252,4 @@ def repair_station(ship):
             
 
 
-events_list_11 = [fuel, food_station, shipwreck, wormhole, asteroid_field, enemy_ship]
-
-events_list_1 = [enemy_ship]
+events_list_1 = [fuel, food_station, shipwreck, wormhole, asteroid_field, enemy_ship]
