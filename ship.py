@@ -4,7 +4,7 @@ import time
 from termcolor import cprint
 from util import clearc, fprint, hide_cursor, show_cursor
 from events import select, Program, events_list_1
-from util import bar
+from util import bar, bar2
 import psutil
 import os
 
@@ -154,6 +154,13 @@ class Ship:
         undertale_thingamajiggy = bar()
         unformulaed_thing = abs(abs(11 - undertale_thingamajiggy) - 11)
         return round(unformulaed_thing * 2.5 * self.damage)
+    
+    def calcshoot(self):  # dont look at the variable names
+        undertale_thingamajiggy = bar2()
+        undertale_thingamajiggy2 = bar2()
+        undertale_thingamajiggy3 = bar2()
+        unformulaed_thing = abs(abs(11 - undertale_thingamajiggy) - 11) + abs(abs(11 - undertale_thingamajiggy2) - 11) + abs(abs(11 - undertale_thingamajiggy3) - 11)
+        return round(unformulaed_thing * 1.4)
 
     def random_event(self):
         clearc()

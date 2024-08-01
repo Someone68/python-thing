@@ -394,5 +394,63 @@ def main(stdscr):
         time.sleep(cursor_speed)
 
 
+def main2(stdscr):
+    curses.curs_set(0)
+    curses.start_color()
+    curses.use_default_colors()
+    curses.init_pair(1, curses.COLOR_WHITE, -1)  # Default background
+    curses.init_pair(2, curses.COLOR_YELLOW, -1)
+
+    if curses.COLORS >= 256:
+        # Define a gray background if the terminal supports 256 colors
+        curses.init_color(8, 300, 300, 300)  # Define a gray color
+        curses.init_pair(3, curses.COLOR_RED, 8)  # Red foreground, gray background
+
+    else:
+        curses.init_pair(
+            3, curses.COLOR_RED, curses.COLOR_BLACK
+        )  # Fallback to black background
+
+    stdscr.nodelay(1)  # Make getch() non-blocking
+
+    bar_width = 21
+    cursor_speed = 0.01
+    cursor_direction = 1  # 1 for right, -1 for left
+    cursor_pos = 0
+
+    h, w = stdscr.getmaxyx()
+    bar_start_x = w // 2 - bar_width // 2
+
+    draw_bar(stdscr, cursor_pos, bar_width, bar_start_x)
+
+    time.sleep(0.7)
+    while True:
+        key = stdscr.getch()
+
+        if key == ord(" "):  # Space bar pressed
+            time.sleep(1)
+            stdscr.refresh()
+            stdscr.getch()
+            return cursor_pos
+
+        # Recalculate bar start position if window size changes
+        new_h, new_w = stdscr.getmaxyx()
+        if new_w != w:
+            w = new_w
+            bar_start_x = w // 2 - bar_width // 2
+
+        draw_bar(stdscr, cursor_pos, bar_width, bar_start_x)
+        cursor_pos += cursor_direction
+
+        if cursor_pos >= bar_width or cursor_pos < 0:
+            cursor_direction *= -1  # Change direction
+            cursor_pos += cursor_direction
+
+        time.sleep(cursor_speed)
+
+
 def bar():
+    return curses.wrapper(main)
+
+def bar2():
     return curses.wrapper(main)

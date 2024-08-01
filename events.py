@@ -494,22 +494,23 @@ def repair_station(ship):
 
 
 class Boss:
-    def __init__(self, name, health, defense):
+    def __init__(self, name, health, defense, damage):
         self.name = name
         self.health = health
         self.defense = defense
         self.max_health = health
         self.max_defense = defense
+        self.damage = damage
         self.cycle = 0
 
     def take_damage(self, power):
-        if self.shield < 1:
+        if self.defense < 1:
             self.health -= power
-        elif power >= self.shield:
-            self.shield = 0
-            self.health += self.shield - power
+        elif power >= self.defense:
+            self.defense = 0
+            self.health += self.defense - power
         else:
-            self.shield -= power
+            self.defense -= power
 
     def heal(self, amount):
         if self.health + amount > self.max_health:
@@ -519,9 +520,14 @@ class Boss:
 
 
 def boss_1(ship):
-    enemy = Boss("The Stellar Warden", 300, 120)
+    enemy = Boss("The Stellar Warden", 300, 120, 10)
+    stamina = 100
+    phase = 1
+    health = 150
+    max_health = health
+    defending = False
     fprint(
-        "You are approaching an abandoned space station. Do you want to explore it, or avoid it and take pictures for scientific purposes?"
+        "You are approaching an abandoned space station. Do you want to explore it, or avoid it and take pictures for scientific purposes?", select=True
     )
     not_really_a_choice = select(["EXPLORE", "AVOID"])
     if not_really_a_choice == "EXPLORE":
@@ -550,132 +556,75 @@ def boss_1(ship):
         )
 
     player_turn = True
-    while ship.health > 0 and ship.energy > 0 and ship.food > 0 and enemy.health > 0:
+    while enemy.health > 0 and health > 0 and stamina > -6:
         clearc()
         print("---")
+        print(colored(f"HEALTH: {health} / {max_health}", "light_red") + "\n",
+              colored(f"STAMINA: {stamina}", "light_blue") + "\n",)
         print(
-            colored(f"SHIELD: {ship.shield} / {ship.max_shield}", "light_blue") + " | ",
             colored(
-                f"ENEMY SHIELD: {enemy.shield} / {enemy.max_shield}", "light_green"
+                f"ENEMY DEFENSE: {enemy.defense} / {enemy.max_defense}", "light_green"
             ),
         )
         print(
-            colored(f"HEALTH: {ship.health} / {ship.max_health}", "light_red") + " | ",
             colored(
                 f"ENEMY HEALTH: {enemy.health} / {enemy.max_health}", "light_yellow"
             ),
         )
         if player_turn:
             fprint("It's your turn.", "light_magenta", False, select=True)
-            choice = select(["FIGHT", "PROGRAM", "FLEE"])
+            choice = select(["FIGHT", "DEFEND", "STALL"])
             if choice == "FIGHT":
+                stamina -= 5
                 clearc()
-                power = ship.calcfight()
+                power = ship.calcshoot()
                 fprint(
                     (
-                        "PERFECT HIT!"
+                        "HEADSHOT!"
                         if power == round(ship.damage * 2.5 * 11)
                         else (
-                            "SOLID HIT!"
+                            ""
                             if round(power >= ship.damage * 2.5 * 9)
-                            else "Regular Hit."
+                            else ""
                         )
                     )
-                    + f" Dealt {power} damage to the enemy ship."
+                    + f" Dealt {power} damage to {enemy.name}."
                 )
                 enemy.take_damage(power)
-                if enemy.shield < 1:
-                    fprint("ENEMY SHIELD IS DOWN!", clear=False, color="light_green")
-            elif choice == "PROGRAM":
-                if len(ship.programs) > 0 and not all(
-                    obj.times_used == obj.uses for obj in ship.programs
-                ):
-                    fprint("Choose a program to run:", select=True)
-                    disabled = []
-                    for i in ship.programs:
-                        if i.times_used >= i.uses:
-                            disabled.append(ship.programs.index(i))
-                    user_select = select(
-                        list(
-                            map(
-                                lambda x: colored(
-                                    "["
-                                    + str(
-                                        find_item_by_name(x, ship.programs)[1].uses
-                                        - find_item_by_name(x, ship.programs)[
-                                            1
-                                        ].times_used
-                                    )
-                                    + "] "
-                                    + x,
-                                    (
-                                        "grey"
-                                        if find_item_by_name(x, ship.programs)[
-                                            1
-                                        ].times_used
-                                        >= find_item_by_name(x, ship.programs)[1].uses
-                                        else "light_yellow"
-                                    ),
-                                ),
-                                sorted(
-                                    list(
-                                        map(
-                                            lambda x: x.name,
-                                            ship.programs,
-                                        )
-                                    ),
-                                    key=lambda name: next(
-                                        (
-                                            obj
-                                            for obj in ship.programs
-                                            if obj.name == name
-                                        ),
-                                        None,
-                                    ).times_used,
-                                ),
-                            )
-                        ),
-                        disabled,
-                    )
-
-                    find_item_by_name(
-                        remove_ansi(user_select).split("] ")[1], ship.programs
-                    )[1].run(ship, enemy)
-                elif len(ship.programs) < 1:
-                    fprint("No programs installed!")
+                if enemy.defense < 1:
+                    fprint("{enemy.name}'s DEFENSE IS DOWN!", clear=False, color="light_green")
+            elif choice == "DEFEND":
+                if(stamina >= 25):
+                  fprint("Defending!")
+                  stamina -= 10
+                  defending = True
                 else:
-                    fprint("No programs are available.")
+                  fprint("Not enough stamina!")
 
             else:
-                energy_use = random.randint(15, 25)
-                success = random.randint(1, 5)
-                if success > 3:
-                    fprint(f"You fled from the battle, using {energy_use} energy.")
-                    ship.energy -= energy_use
-                    break
-                else:
-                    fprint(f"Unsuccessful!")
+                stamina += random.randint(10,25)
+                health += random.randint(10,20)
+                if(health > max_health):
+                    health = max_health
         else:
             damage_taken = enemy.damage * 2 + random.randint(-8, 8)
             print()
             fprint("It's the enemy turn.", color="light_red", select=True, clear=False)
             print()
             fprint(
-                f"The enemy hits you {damage_taken} damage.",
+                f"{enemy.name} hits you {damage_taken if not defending else int(round(damage_taken * 0.75))} damage.",
                 clear=False,
                 select=True if ship.shield < 1 else False,
             )
             print()
-            ship.take_damage(damage_taken)
-            if ship.shield < 1:
-                fprint("CRITICAL: SHIELD IS DOWN!", clear=False, color="light_red")
+            health -= damage_taken if not defending else int(round(damage_taken * 0.75))
         player_turn = not player_turn
     if enemy.health < 1:
         food_gain = random.randint(60, 140)
         energy_gain = random.randint(20, 40)
         credits_gain = random.randint(60, 120)
         fprint(
-            f"Successfully defeated enemy ship! Took {food_gain} food, {energy_gain} fuel, and [c] {credits_gain}.",
+            f"Successfully defeated {enemy.name}.",
             "light_green",
         )
         ship.food += food_gain
@@ -694,4 +643,5 @@ events_list_1 = [
     enemy_ship,
     repair_station,
     repair_station,
+    boss_1
 ]
