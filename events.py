@@ -520,14 +520,15 @@ class Boss:
 
 
 def boss_1(ship):
-    enemy = Boss("The Stellar Warden", 300, 120, 10)
+    enemy = Boss("The Stellar Warden", 300, 170, 10)
     stamina = 100
     phase = 1
     health = 150
     max_health = health
     defending = False
     fprint(
-        "You are approaching an abandoned space station. Do you want to explore it, or avoid it and take pictures for scientific purposes?", select=True
+        "You are approaching an abandoned space station. Do you want to explore it, or avoid it and take pictures for scientific purposes?",
+        select=True,
     )
     not_really_a_choice = select(["EXPLORE", "AVOID"])
     if not_really_a_choice == "EXPLORE":
@@ -557,10 +558,27 @@ def boss_1(ship):
 
     player_turn = True
     while enemy.health > 0 and health > 0 and stamina > -6:
+        if phase == 1 and enemy.defense < 50:
+            fprint(
+                f"Entering phase 2! {enemy.name}'s defense increases! {enemy.name}'s attack decreases!"
+            )
+            phase = 2
+        elif phase == 2 and enemy.defense < 1 and enemy.health < 200:
+            fprint(
+                f"Entering phase 3! {enemy.name}'s defense and attack greatly increase!"
+            )
+            phase = 3
         clearc()
-        print("---")
-        print(colored(f"HEALTH: {health} / {max_health}", "light_red") + "\n",
-              colored(f"STAMINA: {stamina}", "light_blue") + "\n",)
+        cprint(
+            "=" * 40,
+            "light_blue" if phase == 1 else ("light_yellow" if phase == 2 else "red"),
+        )
+        print(
+            colored(f"HEALTH: {health} / {max_health}", "light_red")
+            + "\n"
+            + colored(f"STAMINA: {stamina}", "light_blue")
+            + "\n"
+        )
         print(
             colored(
                 f"ENEMY DEFENSE: {enemy.defense} / {enemy.max_defense}", "light_green"
@@ -577,59 +595,73 @@ def boss_1(ship):
             if choice == "FIGHT":
                 stamina -= 5
                 clearc()
-                power = ship.calcshoot()
-                fprint(
-                    (
-                        "HEADSHOT!"
-                        if power == round(ship.damage * 2.5 * 11)
-                        else (
-                            ""
-                            if round(power >= ship.damage * 2.5 * 9)
-                            else ""
-                        )
+                power = (
+                    ship.calcshoot()
+                    if phase == 1
+                    else (
+                        round(ship.calcshoot() * 0.5)
+                        if phase == 2
+                        else round(ship.calcshoot() * 0.2)
                     )
-                    + f" Dealt {power} damage to {enemy.name}."
                 )
+                fprint(f"Dealt {power} damage to {enemy.name}.")
                 enemy.take_damage(power)
                 if enemy.defense < 1:
-                    fprint("{enemy.name}'s DEFENSE IS DOWN!", clear=False, color="light_green")
+                    fprint(
+                        f"{enemy.name}'s DEFENSE IS DOWN!",
+                        clear=False,
+                        color="light_green",
+                    )
             elif choice == "DEFEND":
-                if(stamina >= 25):
-                  fprint("Defending!")
-                  stamina -= 10
-                  defending = True
+                if stamina >= 25:
+                    fprint("Defending!")
+                    stamina -= 10
+                    defending = True
                 else:
-                  fprint("Not enough stamina!")
+                    fprint("Not enough stamina!")
 
             else:
-                stamina += random.randint(10,25)
-                health += random.randint(10,20)
-                if(health > max_health):
+                stamina += random.randint(10, 25)
+                health += random.randint(10, 20)
+                if health > max_health:
                     health = max_health
         else:
-            damage_taken = enemy.damage * 2 + random.randint(-8, 8)
+            damage_taken = round(
+                enemy.damage * 2
+                + random.randint(-8, 8)
+                * (0.8 if phase == 2 else (1.55 if phase == 3 else 1))
+            )
             print()
             fprint("It's the enemy turn.", color="light_red", select=True, clear=False)
             print()
             fprint(
-                f"{enemy.name} hits you {damage_taken if not defending else int(round(damage_taken * 0.75))} damage.",
+                f"{enemy.name} hits you {damage_taken if not defending else int(round(damage_taken * 0.3))} damage.",
                 clear=False,
                 select=True if ship.shield < 1 else False,
             )
             print()
             health -= damage_taken if not defending else int(round(damage_taken * 0.75))
+            defending = False
         player_turn = not player_turn
     if enemy.health < 1:
         food_gain = random.randint(60, 140)
         energy_gain = random.randint(20, 40)
-        credits_gain = random.randint(60, 120)
+        credits_gain = random.randint(300, 520)
         fprint(
             f"Successfully defeated {enemy.name}.",
             "light_green",
         )
+        fprint(f"You stand there, looking down at the monster you just killed.")
+        fprint(
+            f"When you blink, the body disappears. The only remains are a few coins lying on the ground."
+        )
+        fprint(f"You enter your spaceship.")
+        bosslevel += 1
         ship.food += food_gain
         ship.energy += energy_gain
         ship.credits += credits_gain
+    else:
+        ship.health = 0
     for i in ship.programs:
         i.times_used = 0
 
@@ -643,5 +675,11 @@ events_list_1 = [
     enemy_ship,
     repair_station,
     repair_station,
-    boss_1
 ]
+
+events_list_2 = [
+    fuel,
+    food_station,
+]
+
+bosslevel = 0

@@ -3,7 +3,7 @@ import random
 import time
 from termcolor import cprint
 from util import clearc, fprint, hide_cursor, show_cursor
-from events import select, Program, events_list_1
+from events import select, Program, events_list_1, events_list_2, boss_1, bosslevel
 from util import bar, bar2
 import psutil
 import os
@@ -154,19 +154,26 @@ class Ship:
         undertale_thingamajiggy = bar()
         unformulaed_thing = abs(abs(11 - undertale_thingamajiggy) - 11)
         return round(unformulaed_thing * 2.5 * self.damage)
-    
+
     def calcshoot(self):  # dont look at the variable names
         undertale_thingamajiggy = bar2()
         undertale_thingamajiggy2 = bar2()
         undertale_thingamajiggy3 = bar2()
-        unformulaed_thing = abs(abs(11 - undertale_thingamajiggy) - 11) + abs(abs(11 - undertale_thingamajiggy2) - 11) + abs(abs(11 - undertale_thingamajiggy3) - 11)
-        return round(unformulaed_thing * 1.4)
+        unformulaed_thing = (
+            abs(abs(11 - undertale_thingamajiggy) - 11)
+            + abs(abs(11 - undertale_thingamajiggy2) - 11)
+            + abs(abs(11 - undertale_thingamajiggy3) - 11)
+        )
+        return round(unformulaed_thing * 1.3)
 
     def random_event(self):
         clearc()
         self.energybefore = self.energy
         self.foodbefore = self.food
         self.distancebefore = self.distance
+        if self.distance > 120 and bosslevel < 1:
+            boss_1(self)
+            return
         if self.energy < 15:
             fprint(
                 "The ship's energy is critically low. Do you want to re-reoute to a fuel station, losing distance?",
@@ -186,8 +193,10 @@ class Ship:
             else:
                 fprint("You decided to keep going...")
 
-        event_chosen = random.choice(events_list_1)
+        event_chosen = random.choice(events_list_1 if bosslevel == 0 else events_list_2)
         while event_chosen == self.lastevent:
-            event_chosen = random.choice(events_list_1)
+            event_chosen = random.choice(
+                events_list_1 if bosslevel == 0 else events_list_2
+            )
         self.lastevent = events_list_1.index(event_chosen)
         event_chosen(self)

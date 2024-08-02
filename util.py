@@ -9,7 +9,7 @@ from threading import Thread, Event
 import cutie
 
 
-def select(options, caption_indicies=None, cursor_index=0):
+def select_menu(options, caption_indicies=None, cursor_index=0):
     hide_cursor()
     try:
         if caption_indicies:
