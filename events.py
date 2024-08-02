@@ -520,8 +520,8 @@ class Boss:
 
 
 def boss_1(ship):
-    enemy = Boss("The Stellar Warden", 300, 170, 10)
-    stamina = 100
+    enemy = Boss("The Stellar Warden", 240, 170, 10)
+    stamina = 50
     phase = 1
     health = 150
     max_health = health
@@ -563,7 +563,7 @@ def boss_1(ship):
                 f"Entering phase 2! {enemy.name}'s defense increases! {enemy.name}'s attack decreases!"
             )
             phase = 2
-        elif phase == 2 and enemy.defense < 1 and enemy.health < 200:
+        elif phase == 2 and enemy.defense < 1 and enemy.health < 130:
             fprint(
                 f"Entering phase 3! {enemy.name}'s defense and attack greatly increase!"
             )
@@ -591,7 +591,11 @@ def boss_1(ship):
         )
         if player_turn:
             fprint("It's your turn.", "light_magenta", False, select=True)
-            choice = select(["FIGHT", "DEFEND", "STALL"])
+            if(stamina > 0):
+                choice = select(["FIGHT", "DEFEND", "HEAL"])
+            else:
+                fprint("Out of stamina!", "red")
+                choice = "HEAL"
             if choice == "FIGHT":
                 stamina -= 5
                 clearc()
@@ -606,23 +610,20 @@ def boss_1(ship):
                 )
                 fprint(f"Dealt {power} damage to {enemy.name}.")
                 enemy.take_damage(power)
-                if enemy.defense < 1:
+                if enemy.defense < 1 and phase < 3:
                     fprint(
                         f"{enemy.name}'s DEFENSE IS DOWN!",
                         clear=False,
                         color="light_green",
                     )
             elif choice == "DEFEND":
-                if stamina >= 25:
                     fprint("Defending!")
-                    stamina -= 10
+                    stamina += random.randint(7, 26)
                     defending = True
-                else:
-                    fprint("Not enough stamina!")
 
             else:
-                stamina += random.randint(10, 25)
-                health += random.randint(10, 20)
+                stamina -= random.randint(10, 25)
+                health += random.randint(15, 43)
                 if health > max_health:
                     health = max_health
         else:

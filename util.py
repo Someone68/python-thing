@@ -414,7 +414,7 @@ def main2(stdscr):
     stdscr.nodelay(1)  # Make getch() non-blocking
 
     bar_width = 21
-    cursor_speed = 0.01
+    cursor_speed = 0.023
     cursor_direction = 1  # 1 for right, -1 for left
     cursor_pos = 0
 
@@ -428,7 +428,7 @@ def main2(stdscr):
         key = stdscr.getch()
 
         if key == ord(" "):  # Space bar pressed
-            time.sleep(1)
+            time.sleep(0.4)
             stdscr.refresh()
             stdscr.getch()
             return cursor_pos
@@ -453,4 +453,4 @@ def bar():
     return curses.wrapper(main)
 
 def bar2():
-    return curses.wrapper(main)
+    return curses.wrapper(main2)
