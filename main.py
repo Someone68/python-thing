@@ -155,5 +155,4 @@ print("\n")
 
 time.sleep(1)
 show_cursor()
-
 main()

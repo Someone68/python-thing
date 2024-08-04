@@ -1,3 +1,4 @@
+import threading
 import time
 import random
 from termcolor import colored, cprint
@@ -13,6 +14,7 @@ from util import (
 )
 import cutie
 import re
+from playsound import playsound
 
 
 def remove_ansi(text):
@@ -556,8 +558,18 @@ def boss_1(ship):
             "A massive mechanical entity slowly approaches you. You pull out your emergency gun, slowing backing away."
         )
 
+    def loopSound():
+        while True:
+            playsound("audio.mp3", block=True)
+
+    # providing a name for the thread improves usefulness of error messages.
+    loopThread = threading.Thread(target=loopSound, name="backgroundMusicThread")
+    loopThread.daemon = (
+        True  # shut down music thread when the rest of the program exits
+    )
+    loopThread.start()
     player_turn = True
-    while enemy.health > 0 and health > 0 and stamina > -6:
+    while enemy.health > 0 and health > 0:
         if phase == 1 and enemy.defense < 50:
             fprint(
                 f"Entering phase 2! {enemy.name}'s defense increases! {enemy.name}'s attack decreases!"
@@ -565,7 +577,7 @@ def boss_1(ship):
             phase = 2
         elif phase == 2 and enemy.defense < 1 and enemy.health < 130:
             fprint(
-                f"Entering phase 3! {enemy.name}'s defense and attack greatly increase!"
+                f"Entering phase 3! {enemy.name}'s attack greatly increases! {enemy.name}'s defense greatly decreases!"
             )
             phase = 3
         clearc()
@@ -591,11 +603,11 @@ def boss_1(ship):
         )
         if player_turn:
             fprint("It's your turn.", "light_magenta", False, select=True)
-            if(stamina > 0):
+            if stamina > 0:
                 choice = select(["FIGHT", "DEFEND", "HEAL"])
             else:
                 fprint("Out of stamina!", "red")
-                choice = "HEAL"
+                choice = "DEFEND"
             if choice == "FIGHT":
                 stamina -= 5
                 clearc()
@@ -605,7 +617,7 @@ def boss_1(ship):
                     else (
                         round(ship.calcshoot() * 0.5)
                         if phase == 2
-                        else round(ship.calcshoot() * 0.2)
+                        else round(ship.calcshoot() * 1.5)
                     )
                 )
                 fprint(f"Dealt {power} damage to {enemy.name}.")
@@ -617,9 +629,9 @@ def boss_1(ship):
                         color="light_green",
                     )
             elif choice == "DEFEND":
-                    fprint("Defending!")
-                    stamina += random.randint(7, 26)
-                    defending = True
+                fprint("Defending!")
+                stamina += random.randint(7, 26)
+                defending = True
 
             else:
                 stamina -= random.randint(10, 25)
@@ -641,7 +653,7 @@ def boss_1(ship):
                 select=True if ship.shield < 1 else False,
             )
             print()
-            health -= damage_taken if not defending else int(round(damage_taken * 0.75))
+            health -= damage_taken if not defending else int(round(damage_taken * 0.3))
             defending = False
         player_turn = not player_turn
     if enemy.health < 1:
@@ -667,6 +679,50 @@ def boss_1(ship):
         i.times_used = 0
 
 
+def sos_ship(ship):
+    fprint(
+        "You find a stranded, heavily damaged ship sending out an SOS signal. What do you do?",
+        select=True,
+    )
+    choice = select(["EXPLORE (using heavy energy)", "AVOID"])
+    if choice == "EXPLORE (using heavy energy)":
+        food_amount = random.randint(20, 90)
+        shield_amount = random.randint(5, 15)
+        credits_amount = random.randint(10, 50)
+        energy_use = random.randint(20, 35)
+        fprint(
+            f"You find {food_amount} food, {shield_amount} shield parts, and {credits_amount}"
+        )
+        if random.randint(1, 2) == 2:
+            distance_multiplier = round(random.uniform(0.1, 0.6), 1)
+            energy_capacity = random.randint(5, 20)
+            fprint(
+                f"You also find surviving crew members. Your DpC (distance per cycle) increases! Your maximum energy capacity increases!"
+            )
+            ship.max_energy += energy_capacity
+            ship.energy += energy_capacity
+            ship.distance_multiplier += distance_multiplier
+        fprint(f"Used {energy_use} energy.")
+    else:
+        fprint("Saving energy.")
+
+
+def meteor_shower(ship):
+    fprint(
+        "You are approaching a meteor shower. Do you want to avoid it, or save energy, but take some heavy damage?",
+        select=True,
+    )
+    choice = select(["PROCEED", "AVOID"])
+    if choice == "PROCEED":
+        damage_taken = random.randint(10, 80)
+        ship.take_damage(damage_taken)
+        fprint(f"{damage_taken} damage taken!", "red")
+    else:
+        energy_use = random.randint(5, 20)
+        ship.energy -= energy_use
+        fprint("Used {energy_use} energy.", "red")
+
+
 events_list_1 = [
     fuel,
     food_station,
@@ -678,9 +734,6 @@ events_list_1 = [
     repair_station,
 ]
 
-events_list_2 = [
-    fuel,
-    food_station,
-]
+events_list_2 = [fuel, food_station, sos_ship, meteor_shower]
 
 bosslevel = 0

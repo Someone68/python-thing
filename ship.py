@@ -38,6 +38,7 @@ class Ship:
         self.distancebefore = 0
         self.lastevent = None
         self.programs = []
+        self.distance_multiplier = 1
 
     def is_alive(self):
         return self.energy > 0 and self.food > 0 and self.health > 0
@@ -108,13 +109,14 @@ class Ship:
                     input()
                 elif choice == "run event":
                     cprint("choose an event to run:")
-                    run = select(list(map(lambda x: x.__name__, events_list_1)))
+                    events_list = events_list_1 + events_list_2
+                    run = select(list(map(lambda x: x.__name__, events_list)))
                     function_names = {
-                        func.__name__: idx for idx, func in enumerate(events_list_1)
+                        func.__name__: idx for idx, func in enumerate(events_list)
                     }
-                    to_run = events_list_1[function_names[run]]
+                    to_run = events_list[function_names[run]]
                     clearc()
-                    events_list_1[events_list_1.index(to_run)](self)
+                    events_list[events_list.index(to_run)](self)
                 elif choice == "show memory usage":
                     log_memory_usage()
                     input("enter to continue . . . ")
@@ -138,7 +140,7 @@ class Ship:
             self.health += heal
 
     def calc_resources(self):
-        travel_dist = random.randint(6, 20)
+        travel_dist = round(random.randint(9, 27) * self.distance_multiplier)
         energy_used = floor(travel_dist * 0.5)
         food_consumed = floor(travel_dist * 0.8)
         self.distance += travel_dist
