@@ -1180,5 +1180,4 @@ events_list_2 = [
     repair_station_2,
     repair_station_2,
     enemy_ship_2,
-    final_boss,
 ]
