@@ -1,5 +1,4 @@
 import time
-import random
 from termcolor import colored, cprint
 import os
 import sys
@@ -212,18 +211,22 @@ def clearc():
 
 
 def fprint(
-    text, color="light_magenta", clear=True, select=False
+    text, color="light_magenta", clear=True, select=False, header=None
 ):  # STANDS FOR FANCY PRINT
     if clear:
         clearc()
+    if header:
+        cprint(header, color)
     print("---")
     tprint(text, color, not select)
     # print("")
 
 
-def finput(text, color="light_green", clear=True, required=True):
+def finput(text, color="light_green", clear=True, required=True, header=None):
     if clear:
         clearc()
+    if header:
+        cprint(header, color)
     print("---")
     if not required:
         userinput = tinput(text, color)
@@ -423,7 +426,7 @@ def main2(stdscr):
 
     draw_bar(stdscr, cursor_pos, bar_width, bar_start_x)
 
-    time.sleep(0.7)
+    time.sleep(0.3)
     while True:
         key = stdscr.getch()
 
@@ -451,6 +454,7 @@ def main2(stdscr):
 
 def bar():
     return curses.wrapper(main)
+
 
 def bar2():
     return curses.wrapper(main2)

@@ -3,7 +3,7 @@ import random
 import time
 from termcolor import cprint
 from util import clearc, fprint, hide_cursor, show_cursor
-from events import select, Program, events_list_1, events_list_2, boss_1, bosslevel
+from events import final_boss, select, Program, events_list_1, events_list_2, boss_1
 from util import bar, bar2
 import psutil
 import os
@@ -30,7 +30,7 @@ class Ship:
         self.max_energy = 75
         self.damage = 1
         self.distance = 0
-        self.distance_required = 500
+        self.distance_required = 350
         self.credits = 10
         self.cycle = 0
         self.energybefore = 50
@@ -39,6 +39,7 @@ class Ship:
         self.lastevent = None
         self.programs = []
         self.distance_multiplier = 1
+        self.bosslevel = 1
 
     def is_alive(self):
         return self.energy > 0 and self.food > 0 and self.health > 0
@@ -140,7 +141,9 @@ class Ship:
             self.health += heal
 
     def calc_resources(self):
-        travel_dist = round(random.randint(9, 27) * self.distance_multiplier)
+        travel_dist = round(
+            random.randint(9, 27) * self.distance_multiplier * self.bosslevel
+        )
         energy_used = floor(travel_dist * 0.5)
         food_consumed = floor(travel_dist * 0.8)
         self.distance += travel_dist
@@ -173,8 +176,11 @@ class Ship:
         self.energybefore = self.energy
         self.foodbefore = self.food
         self.distancebefore = self.distance
-        if self.distance > 120 and bosslevel < 1:
+        if self.distance > 120 and self.bosslevel == 1:
             boss_1(self)
+            return
+        if self.distance > 300 and self.bosslevel == 2:
+            final_boss(self)
             return
         if self.energy < 15:
             fprint(
@@ -195,10 +201,12 @@ class Ship:
             else:
                 fprint("You decided to keep going...")
 
-        event_chosen = random.choice(events_list_1 if bosslevel == 0 else events_list_2)
+        event_chosen = random.choice(
+            events_list_1 if self.bosslevel == 1 else events_list_2
+        )
         while event_chosen == self.lastevent:
             event_chosen = random.choice(
-                events_list_1 if bosslevel == 0 else events_list_2
+                events_list_1 if self.bosslevel == 0 else events_list_2
             )
-        self.lastevent = events_list_1.index(event_chosen)
+        self.lastevent = (events_list_1 + events_list_2).index(event_chosen)
         event_chosen(self)

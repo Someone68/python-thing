@@ -1,0 +1,3 @@
+cutie==0.3.2
+psutil==6.0.0
+termcolor==2.4.0

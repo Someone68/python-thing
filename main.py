@@ -1,11 +1,11 @@
 import time
 import random
 from termcolor import colored, cprint
+from events import select
 from util import hide_cursor, show_cursor, tprint, tinput, fprint, finput, clearc
 from ship import Ship
 import datetime
 import sys
-import psutil
 import os
 
 
@@ -75,7 +75,12 @@ def main():
         ship.cycle += 1
         consumed = ship.calc_resources()
         ship.print_stats()
-        if random.randint(1, 5) > 1 or ship.energy < 20:
+        if (
+            random.randint(1, 5) > 1
+            or ship.energy < 20
+            or (ship.distance > 120 and ship.bosslevel == 1)
+            or (ship.distance > 300 and ship.bosslevel == 2)
+        ):
             ship.random_event()
         fprint(f":: In this cycle:", "light_blue", False, True)
         tprint(
@@ -93,7 +98,7 @@ def main():
             pause=True,
             color="light_blue",
         )
-    if ship.is_alive():
+    if ship.is_alive() and ship.bosslevel == 3:
         clearc()
         cprint(
             """==================
@@ -101,8 +106,11 @@ def main():
 ==================""",
             "light_green",
         )
-        input()
-        fprint("You successfully arrived at the Stellaris Rift. Ty for playing bye")
+        fprint(
+            "You successfully arrived at the Stellaris Rift. Ty for playing bye",
+            clear=False,
+            select=True,
+        )
     else:
         clearc()
         cprint(
@@ -111,48 +119,86 @@ def main():
 ===========""",
             "light_red",
         )
-        input()
-        fprint("nice try")
+        fprint(
+            f"You{' ran out of energy' if ship.energy < 1 else (' ran out of food' if ship.food < 1 else ('r ship ran out of health' if ship.health < 1 else 'error'))}.",
+            clear=False,
+            color="red",
+            select=True,
+        )
 
 
-clearc()
+def menu():
+    clearc()
+
+    cprint("=" * 25)
+    cprint(f"{'The Stellaris Rift':^25}", "blue")
+    cprint("=" * 25)
+    print()
+    print(colored(f" Choose an option", "yellow"))
+    choice = select(["PLAY", "CREDITS", "QUIT"])
+
+    clearc()
+    if choice == "PLAY":
+        load()
+    elif choice == "CREDITS":
+        credits()
+    else:
+        clearc()
+        quit()
 
 
-cprint("=" * 25)
-cprint(f"{'The Stellaris Rift':^25}", "blue")
-cprint("=" * 25)
-print()
-print(colored(f"{'Press enter to begin':^25}", "yellow"))
-hide_cursor()
-input("")
-
-clearc()
-
-animation = [
-    "[■□□□□□□□□□]",
-    "[■■□□□□□□□□]",
-    "[■■■□□□□□□□]",
-    "[■■■■□□□□□□]",
-    "[■■■■■□□□□□]",
-    "[■■■■■■□□□□]",
-    "[■■■■■■■□□□]",
-    "[■■■■■■■■□□]",
-    "[■■■■■■■■■□]",
-    "[■■■■■■■■■■]",
-]
-
-
-for i in range(len(animation)):
-    time.sleep(random.uniform(0.06, 0.3))
-
-    sys.stdout.write(
-        "\rLoading... \x1b[38;5;218m" + animation[i % len(animation)] + "\x1b[0m"
-    )
-    sys.stdout.flush()
+def credits():
+    clearc()
+    cprint(" " * 25)
+    cprint(f"{'The Stellaris Rift':^25}", "blue")
+    cprint(" " * 25)
+    cprint(f"{'Programming':^25}", "green")
+    cprint(f"{'FelixM':^25}")
+    cprint(f"{'Stack Overflow':^25}")
+    cprint("")
+    cprint(f"{'Idea/Inspiration':^25}", "green")
+    cprint(f"{'HACKINGTONS':^25}")
+    cprint(f"{'ChatGPT':^25}")
+    cprint("")
+    cprint(f"{'Programming Help':^25}", "green")
+    cprint(f"{'Obscure Python Libraries':^25}")
+    cprint(f"{'ChatGPT':^25}")
+    cprint("")
+    cprint(f"{'Press enter to exit':^25}")
+    hide_cursor()
+    input()
+    show_cursor()
+    menu()
 
 
-print("\n")
+def load():
+    hide_cursor()
+    animation = [
+        "[■□□□□□□□□□]",
+        "[■■□□□□□□□□]",
+        "[■■■□□□□□□□]",
+        "[■■■■□□□□□□]",
+        "[■■■■■□□□□□]",
+        "[■■■■■■□□□□]",
+        "[■■■■■■■□□□]",
+        "[■■■■■■■■□□]",
+        "[■■■■■■■■■□]",
+        "[■■■■■■■■■■]",
+    ]
 
-time.sleep(1)
-show_cursor()
-main()
+    for i in range(len(animation)):
+        time.sleep(random.uniform(0.06, 0.3))
+
+        sys.stdout.write(
+            "\rLoading... \x1b[38;5;218m" + animation[i % len(animation)] + "\x1b[0m"
+        )
+        sys.stdout.flush()
+
+    print("\n")
+
+    time.sleep(1)
+    show_cursor()
+    main()
+
+
+menu()

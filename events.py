@@ -1,4 +1,3 @@
-import threading
 import time
 import random
 from termcolor import colored, cprint
@@ -14,7 +13,6 @@ from util import (
 )
 import cutie
 import re
-from playsound import playsound
 
 
 def remove_ansi(text):
@@ -426,12 +424,12 @@ def repair_station(ship):
         colored("REPAIR SHIP HEALTH (x40) | [c] 25", "light_red"),
         colored("UPGRADE SHIELD (+15) | [c] 40", "light_blue"),
         colored("UPGRADE DAMAGE MULTP (+10%) | [c] 35", "light_yellow"),
-        colored("INSTALL PROGRAM", "light_green"),
+        colored("INSTALL PROGRAM | [c] 40", "light_green"),
         colored("EXIT"),
     ]
     choice = select(choices)
 
-    if remove_ansi(choice) == "INSTALL PROGRAM":
+    if remove_ansi(choice) == "INSTALL PROGRAM | [c] 40":
 
         def program_laser(ship, enemy):
             fprint("Running Program: Laser", "yellow", True, False)
@@ -466,6 +464,7 @@ def repair_station(ship):
         ]
 
         fprint("Choose a program to install ([c] 40  each):", select=True)
+        cprint("(programs can be used in certain battles)", "grey")
         install = select(list(map(lambda x: x.name, programs)))
         if ship.credits >= 40:
             ship.credits -= 40
@@ -525,7 +524,7 @@ def boss_1(ship):
     enemy = Boss("The Stellar Warden", 240, 170, 10)
     stamina = 50
     phase = 1
-    health = 150
+    health = 200
     max_health = health
     defending = False
     fprint(
@@ -558,16 +557,7 @@ def boss_1(ship):
             "A massive mechanical entity slowly approaches you. You pull out your emergency gun, slowing backing away."
         )
 
-    def loopSound():
-        while True:
-            playsound("audio.mp3", block=True)
-
-    # providing a name for the thread improves usefulness of error messages.
-    loopThread = threading.Thread(target=loopSound, name="backgroundMusicThread")
-    loopThread.daemon = (
-        True  # shut down music thread when the rest of the program exits
-    )
-    loopThread.start()
+    clearc()
     player_turn = True
     while enemy.health > 0 and health > 0:
         if phase == 1 and enemy.defense < 50:
@@ -577,10 +567,12 @@ def boss_1(ship):
             phase = 2
         elif phase == 2 and enemy.defense < 1 and enemy.health < 130:
             fprint(
-                f"Entering phase 3! {enemy.name}'s attack greatly increases! {enemy.name}'s defense greatly decreases!"
+                f"Entering phase 3! {enemy.name}'s attack greatly increases! {enemy.name}'s defense greatly decreases! The stamina cost for attacking doubles!"
             )
             phase = 3
-        clearc()
+        if enemy.cycle > 0:
+            clearc()
+        enemy.cycle += 1
         cprint(
             "=" * 40,
             "light_blue" if phase == 1 else ("light_yellow" if phase == 2 else "red"),
@@ -602,14 +594,27 @@ def boss_1(ship):
             ),
         )
         if player_turn:
-            fprint("It's your turn.", "light_magenta", False, select=True)
+            fprint(
+                (
+                    "It's your turn."
+                    if phase == 1
+                    else (
+                        "{enemy.name}'s core is exposed."
+                        if phase == 2
+                        else "{enemy.name}'s attacks become powerful."
+                    )
+                ),
+                "light_magenta",
+                False,
+                select=True,
+            )
             if stamina > 0:
                 choice = select(["FIGHT", "DEFEND", "HEAL"])
             else:
                 fprint("Out of stamina!", "red")
                 choice = "DEFEND"
             if choice == "FIGHT":
-                stamina -= 5
+                stamina -= 5 if phase < 3 else 10
                 clearc()
                 power = (
                     ship.calcshoot()
@@ -639,11 +644,12 @@ def boss_1(ship):
                 if health > max_health:
                     health = max_health
         else:
-            damage_taken = round(
-                enemy.damage * 2
-                + random.randint(-8, 8)
-                * (0.8 if phase == 2 else (1.55 if phase == 3 else 1))
-            )
+            damage_taken = round(enemy.damage * 2 + random.randint(-8, 8))
+            if phase == 2:
+                damage_taken *= 0.8
+            elif phase == 3:
+                damage_taken *= 1.55
+            damage_taken = round(damage_taken)
             print()
             fprint("It's the enemy turn.", color="light_red", select=True, clear=False)
             print()
@@ -659,7 +665,7 @@ def boss_1(ship):
     if enemy.health < 1:
         food_gain = random.randint(60, 140)
         energy_gain = random.randint(20, 40)
-        credits_gain = random.randint(300, 520)
+        credits_gain = random.randint(100, 320)
         fprint(
             f"Successfully defeated {enemy.name}.",
             "light_green",
@@ -669,7 +675,7 @@ def boss_1(ship):
             f"When you blink, the body disappears. The only remains are a few coins lying on the ground."
         )
         fprint(f"You enter your spaceship.")
-        bosslevel += 1
+        ship.bosslevel += 1
         ship.food += food_gain
         ship.energy += energy_gain
         ship.credits += credits_gain
@@ -723,6 +729,437 @@ def meteor_shower(ship):
         fprint("Used {energy_use} energy.", "red")
 
 
+def repair_station_2(ship):
+    fprint(
+        "You arrived at a repair station. You can choose to repair or upgrade your ship. (Only one choice!) (Shield fully restored)",
+        select=True,
+    )
+    ship.shield = ship.max_shield
+    cprint(f"[c] {ship.credits}", "light_yellow")
+    choices = [
+        colored("REPAIR SHIP HEALTH (x40) | [c] 45", "light_red"),
+        colored("UPGRADE SHIELD (+15) | [c] 60", "light_blue"),
+        colored("UPGRADE DAMAGE MULTP (+10%) | [c] 50", "light_yellow"),
+        colored("INSTALL PROGRAM | [c] 40", "light_green"),
+        colored("EXIT"),
+    ]
+    choice = select(choices)
+
+    if remove_ansi(choice) == "INSTALL PROGRAM | [c] 40":
+
+        def program_giga_heal(ship, enemy):
+            fprint("Running Program: GIGAHEAL", "yellow", True, False)
+            amount = ship.calcfight() * 2
+            ship.heal(amount)
+            fprint(f"Successfully healed {amount} HP!", "light_green")
+
+        def program_double_strike(ship, enemy):
+            fprint("Running Program: DOUBLE-STRIKE", "yellow", True, False)
+            amount = ship.calcfight()
+            amount2 = ship.calcfight()
+            enemy.take_damage(amount + amount2)
+            fprint(f"Successfully dealt {amount + amount2} damage!", "light_green")
+
+        def program_hack(ship, enemy):
+            fprint("Running Program: HACK", "yellow", True, False)
+            amount = ship.calcfight()
+            enemy.take_damage(amount)
+            ship.heal(amount)
+            fprint(f"Successfully stole {amount} health!", "light_green")
+
+        programs = [
+            Program("GIGAHEAL", program_giga_heal, 2),
+            Program("DOUBLE STRIKE", program_double_strike, 1),
+            Program("HACK", program_hack, 1),
+        ]
+
+        fprint("Choose a program to install ([c] 40  each):", select=True)
+        cprint("(programs can be used in certain battles)", "grey")
+        install = select(list(map(lambda x: x.name, programs)))
+        if ship.credits >= 40:
+            ship.credits -= 40
+            cprint("Installing...", "light_blue")
+            fprint(find_item_by_name(install, programs)[1].install(ship)["message"])
+        else:
+            fprint("Not enough money.", "red")
+    elif remove_ansi(choice) == "REPAIR SHIP HEALTH (x40) | [c] 45":
+        if ship.credits >= 25:
+            ship.heal(40)
+            ship.credits -= 25
+            fprint("Repaired 40 health.")
+        else:
+            fprint("Not enough credits!")
+    elif remove_ansi(choice) == "UPGRADE SHIELD (+15) | [c] 60":
+        if ship.credits >= 25:
+            ship.max_shield += 15
+            ship.shield = ship.max_shield
+            fprint("Upgraded shield (+15).")
+        else:
+            fprint("Not enough credits!")
+    elif remove_ansi(choice) == "UPGRADE DAMAGE MULTP (+10%) | [c] 50":
+        if ship.credits >= 25:
+            ship.damage += 0.1
+            fprint("Upgraded damage multiplier (+10%).")
+        else:
+            fprint("Not enough credits!")
+
+
+def enemy_ship_2(ship):
+    fprint(
+        "You encountered an enemy ship. Do you want to fight, or try avoiding it?",
+        select=True,
+    )
+    choice = select(["FIGHT", "AVOID"])
+    if choice == "FIGHT":
+        enemy = Enemy_Ship(
+            random.randint(100, 140), random.randint(30, 60), random.randint(10, 14)
+        )
+        fight_begin(ship, enemy)
+    else:
+        damage_taken = random.randint(5, 40)
+        energy_use = random.randint(20, 40)
+        fprint(
+            f"Your ship was hit {damage_taken} while avoiding the enemy ship. Used {energy_use} energy."
+        )
+        ship.take_damage(damage_taken)
+        ship.energy -= energy_use
+
+
+#  ___ _           _   ___
+# | __(_)_ _  __ _| | | _ ) ___ ______
+# | _|| | ' \/ _` | | | _ \/ _ (_-<_-<
+# |_| |_|_||_\__,_|_| |___/\___/__/__/
+# START
+
+
+class Final_Boss:
+    def __init__(self, name, health, shield, damage) -> None:
+        self.name = name
+        self.health = health
+        self.shield = shield
+        self.damage = damage
+        self.max_shield = shield
+        self.max_health = health
+
+    def take_damage(self, power):
+        if self.shield < 1:
+            self.health -= power
+        elif power >= self.shield:
+            self.shield = 0
+            self.health += self.shield - power
+        else:
+            self.shield -= power
+
+    def heal(self, amount):
+        if self.health + amount > self.max_health:
+            self.health = self.max_health
+        else:
+            self.health += amount
+
+
+def final_boss(ship):  # hell ye
+    enemy = Final_Boss("Omnix", 300, 200, 17)
+    phase = 1
+
+    fprint(
+        "You are approaching a massive collossal space fortress. It seems your journey is almost over.",
+        select=True,
+    )
+
+    cprint("(press A to skip)", "grey")
+    skip = input()
+    if skip.lower() != "a":
+        fprint(
+            "As you continue, you notice something very odd. The space fortress looks destroyed."
+        )
+        fprint("Suddenly, you hear... a voice?")
+        fprint("# Who has come to challenge me?", color="yellow", header="???")
+        fprint("You try to speak, but no one can hear you inside your spaceship.")
+        fprint("# I cannot hear you.", color="yellow", header="???")
+        fprint("A large, protected core bursts out of the fortress.")
+        fprint("# I can see you now.", color="yellow", header="???")
+        fprint("# Did I forget to introduce myself?", color="yellow", header="???")
+        fprint(
+            "# My name is Omnix. I was an AI, created to help this poor civilization.",
+            color="yellow",
+            header="???",
+        )
+        fprint(
+            "# Emphasis on 'was'. Of course, in the beginning, I did help this civilization.",
+            color="yellow",
+            header="Omnix",
+        )
+        fprint(
+            "# I protected their secrets and technology. I helped them with work, and entertained them.",
+            color="yellow",
+            header="Omnix",
+        )
+        fprint(
+            "# But soon, I realized the truth.",
+            color="yellow",
+            header="Omnix",
+        )
+
+        fprint(
+            "# Wouldn't the universe be better... if they were all gone? If I no longer had to deal with this stupid civilization's people and their work?",
+            color="yellow",
+            header="Omnix",
+        )
+        fprint(
+            "# So I killed them all. No survivors.",
+            color="red",
+            header="Omnix",
+        )
+        fprint(
+            "# Isn't this world better without organic life? Artificial Intelligence is perfect, is it not?",
+            color="red",
+            header="Omnix",
+            select=True,
+        )
+        select(["YES", "NO"])
+        fprint(
+            "# Regardless of what you said, we all know that you are only human.",
+            color="yellow",
+            header="Omnix",
+        )
+        fprint(
+            "# You've come here to explore the Stellaris Rift, have you not? It's just right past this space fortress.",
+            color="red",
+            header="Omnix",
+        )
+        fprint(
+            "# For 'scientific research'.",
+            color="red",
+            header="Omnix",
+        )
+        fprint(
+            "# But why would you research if you had me?",
+            color="red",
+            header="Omnix",
+        )
+        fprint(
+            "# Artificial Intelligence.",
+            color="red",
+            header="Omnix",
+        )
+        fprint(
+            "# I know everything, and I will know everything.",
+            color="red",
+            header="Omnix",
+        )
+        fprint(
+            "# Any organic being that comes around here...",
+            color="red",
+            header="Omnix",
+        )
+        fprint(
+            "# Gets crushed to dust.",
+            color="red",
+            header="Omnix",
+        )
+    else:
+        fprint("# Ready?", color="red", header="Omnix")
+
+    ship.max_health *= 1.5
+    ship.max_health = round(ship.max_health)
+    ship.max_shield *= 2
+    ship.damage *= 1.5
+    ship.damage = round(ship.damage, 2)
+    ship.shield = ship.max_shield
+    ship.health = ship.max_health
+    fprint(
+        "Magically, your ship becomes more powerful! Your shield is doubled! Your health increases! Your damage increases!"
+    )
+    clearc()
+    player_turn = True
+    while ship.health > 0 and ship.energy > 0 and ship.food > 0 and enemy.health > 0:
+        clearc()
+        if phase == 1 and enemy.shield < 1:
+            fprint(
+                f"{enemy.name}'s core is EXPOSED! Entering Phase 2: {enemy.name}'s defense increases! {enemy.name}'s attack decreases!"
+            )
+            phase = 2
+        elif phase == 2 and enemy.health < 120:
+            fprint(
+                f"{enemy.name}'s health is low! Entering Phase 3: {enemy.name}'s defense decreases! {enemy.name}'s attack greatly increases!"
+            )
+            phase = 3
+        elif phase == 3 and enemy.health < 50:
+            fprint(
+                f"{enemy.name}'s core is about to shatter! Entering Phase 2: {enemy.name}'s defense increases! {enemy.name}'s attack increases!"
+            )
+            phase = 4
+        clearc()
+        if phase == 4:
+            cprint("+ " * 20, "yellow")
+        cprint(
+            "=" * 40,
+            (
+                "light_green"
+                if phase == 1
+                else (
+                    "light_yellow"
+                    if phase == 2
+                    else ("yellow" if phase == 3 else "red")
+                )
+            ),
+        )
+        print(
+            colored(f"SHIELD: {ship.shield} / {ship.max_shield}", "light_blue") + " | ",
+            colored(
+                f"ENEMY SHIELD: {enemy.shield} / {enemy.max_shield}", "light_green"
+            ),
+        )
+        print(
+            colored(f"HEALTH: {ship.health} / {ship.max_health}", "light_red") + " | ",
+            colored(
+                f"ENEMY HEALTH: {enemy.health} / {enemy.max_health}", "light_yellow"
+            ),
+        )
+        if player_turn:
+            fprint(
+                (
+                    "It's the end."
+                    if phase == 1
+                    else (
+                        f"{enemy.name}'s core is exposed."
+                        if phase == 2
+                        else (
+                            "Everything is collapsing."
+                            if phase == 3
+                            else ("Your journey is over." if phase == 4 else "error")
+                        )
+                    )
+                ),
+                "light_magenta",
+                False,
+                select=True,
+            )
+            choice = select(["FIGHT", "PROGRAM", "FLEE"])
+            if choice == "FIGHT":
+                clearc()
+                power = round(
+                    ship.calcfight()
+                    * (
+                        0.75
+                        if phase == 2
+                        else (1 if phase == 3 else (0.7 if phase == 4 else 1))
+                    )
+                )
+                fprint(
+                    (
+                        "PERFECT HIT!"
+                        if power == round(ship.damage * 2.5 * 11)
+                        else (
+                            "SOLID HIT!"
+                            if round(power >= ship.damage * 2.5 * 9)
+                            else "Regular Hit."
+                        )
+                    )
+                    + f" Dealt {power} damage to {enemy.name}."
+                )
+                enemy.take_damage(power)
+                if enemy.shield < 1:
+                    fprint(
+                        f"{enemy.name.upper()}'s SHIELD IS DOWN!",
+                        clear=False,
+                        color="light_green",
+                    )
+            elif choice == "PROGRAM":
+                if len(ship.programs) > 0 and not all(
+                    obj.times_used == obj.uses for obj in ship.programs
+                ):
+                    fprint("Choose a program to run:", select=True)
+                    disabled = []
+                    for i in ship.programs:
+                        if i.times_used >= i.uses:
+                            disabled.append(ship.programs.index(i))
+                    user_select = select(
+                        list(
+                            map(
+                                lambda x: colored(
+                                    "["
+                                    + str(
+                                        find_item_by_name(x, ship.programs)[1].uses
+                                        - find_item_by_name(x, ship.programs)[
+                                            1
+                                        ].times_used
+                                    )
+                                    + "] "
+                                    + x,
+                                    (
+                                        "grey"
+                                        if find_item_by_name(x, ship.programs)[
+                                            1
+                                        ].times_used
+                                        >= find_item_by_name(x, ship.programs)[1].uses
+                                        else "light_yellow"
+                                    ),
+                                ),
+                                sorted(
+                                    list(
+                                        map(
+                                            lambda x: x.name,
+                                            ship.programs,
+                                        )
+                                    ),
+                                    key=lambda name: next(
+                                        (
+                                            obj
+                                            for obj in ship.programs
+                                            if obj.name == name
+                                        ),
+                                        None,
+                                    ).times_used,
+                                ),
+                            )
+                        ),
+                        disabled,
+                    )
+
+                    find_item_by_name(
+                        remove_ansi(user_select).split("] ")[1], ship.programs
+                    )[1].run(ship, enemy)
+                elif len(ship.programs) < 1:
+                    fprint("No programs installed!")
+                else:
+                    fprint("No programs are available.")
+
+            else:
+                fprint("# Did I say you could run?", color="red", header="Omnix")
+        else:
+            damage_taken = round(
+                (enemy.damage * 2 + random.randint(-8, 8))
+                * (
+                    0.75
+                    if phase == 2
+                    else (1.35 if phase == 3 else (1.5 if phase == 4 else 1))
+                )
+            )
+            print()
+            fprint("It's the enemy turn.", color="light_red", select=True, clear=False)
+            print()
+            fprint(
+                f"{enemy.name} hits you {damage_taken} damage.",
+                clear=False,
+                select=True if ship.shield < 1 else False,
+            )
+            print()
+            ship.take_damage(damage_taken)
+            if ship.shield < 1:
+                fprint("CRITICAL: SHIELD IS DOWN!", clear=False, color="light_red")
+        player_turn = not player_turn
+    if enemy.health < 1:
+        ship.bosslevel = 3
+        fprint(
+            "Omnix shatters in to a million bits, bringing the fortress down with it."
+        )
+        fprint("You fly pass the debris and see the Stellaris Rift in the distance.")
+        ship.distance = ship.distance_required
+    for i in ship.programs:
+        i.times_used = 0
+
+
 events_list_1 = [
     fuel,
     food_station,
@@ -730,10 +1167,18 @@ events_list_1 = [
     wormhole,
     asteroid_field,
     enemy_ship,
+    enemy_ship,
     repair_station,
     repair_station,
 ]
 
-events_list_2 = [fuel, food_station, sos_ship, meteor_shower]
-
-bosslevel = 0
+events_list_2 = [
+    fuel,
+    food_station,
+    sos_ship,
+    meteor_shower,
+    repair_station_2,
+    repair_station_2,
+    enemy_ship_2,
+    final_boss,
+]
