@@ -211,7 +211,7 @@ def food_station(ship):
                 else None
             )
             if remove_ansi(buy) == "EXIT":
-                fprint("Leaving...", clear=False)
+                fprint("Leaving", clear=False)
                 break
             if ship.credits >= cost:
                 ship.credits -= cost
@@ -222,7 +222,7 @@ def food_station(ship):
                     clear=False,
                     select=True,
                 )
-                if select(["BUY", "EXIT"]) == "NO":
+                if select(["BUY", "EXIT"]) == "EXIT":
                     break
             else:
                 fprint("Not enough credits!", color="light_red", clear=False)
@@ -993,7 +993,7 @@ def final_boss(ship):  # hell ye
         if phase == 4:
             cprint("+ " * 20, "yellow")
         cprint(
-            "=" * 40,
+            "=" * 45,
             (
                 "light_green"
                 if phase == 1

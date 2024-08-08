@@ -1,6 +1,13 @@
 import time
 import random
-from termcolor import colored, cprint
+
+try:
+    from termcolor import colored, cprint
+except ImportError:
+    print(
+        "\x1b[38;5;9mBefore running the game, install the required libraries. Read README.md to figure out how.\x1b[0m"
+    )
+    quit()
 from events import select
 from util import hide_cursor, show_cursor, tprint, tinput, fprint, finput, clearc
 from ship import Ship

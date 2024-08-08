@@ -3,7 +3,15 @@ from termcolor import colored, cprint
 import os
 import sys
 import select
-import curses
+
+try:
+    import curses
+except ImportError:
+    cprint(
+        "curses is not found.\nIf you are on linux, your python installation is fricked.\nIf you are on windows, make sure windows-curses is installed: Check README.md",
+        "red",
+    )
+    quit()
 from threading import Thread, Event
 import cutie
 
