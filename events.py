@@ -599,9 +599,9 @@ def boss_1(ship):
                     "It's your turn."
                     if phase == 1
                     else (
-                        "{enemy.name}'s core is exposed."
+                        f"{enemy.name}'s core is exposed."
                         if phase == 2
-                        else "{enemy.name}'s attacks become powerful."
+                        else f"{enemy.name}'s attacks become powerful."
                     )
                 ),
                 "light_magenta",
