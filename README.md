@@ -1,8 +1,36 @@
-# READ BEFORE RUNNING THE GAME
-cool game: requires python 3<br><br>
-**install required libraries** with `pip install -r requirements.txt` AFTER you are in the project directory.<br>
-**if pip is not in PATH**, then run `python -m pip install -r requirements.txt` or `py -m pip install -r requirements.txt`<br>
-**if you are on windows:** you may also need to install windows-curses. run `pip install windows-curses` or `python -m pip install windows-curses` or `py -m pip install windows-curses`, depending on your python installation.<br><br>
-**TO RUN THE GAME:** Once you are in the project directory, run `python main.py`, or `py main.py` or just open `main.py` if it automatically runs with python<br><br>
-*to enable devtools*: please do this after you have finished the game normally. type `devtools` when your stats are shown in each cycle and then press enter.<br>
-have fun
+# The Stellaris Rift
+
+Python 3 Terminal Game
+Requires Python 3
+
+## Download Game
+
+Click on the latest release and download the `release.zip`.<br>
+Unzip the release.
+
+## Install required libraries
+
+- CD into the game directory: Open your terminal, type `cd PATH/TO/EXTRACTED/RELEASE/python-thing-main`
+- Install dependencies with the following command:
+
+```bash
+pip install -r requirements.txt
+```
+
+## Windows Only: Install windows-curses
+
+Windows-curses is required for the game to work.
+
+```bash
+pip install windows-curses
+```
+
+## Run the game
+
+```bash
+python3 main.py
+# or just
+python main.py
+```
+
+###### i would say "have fun" but this game is not fun lmao

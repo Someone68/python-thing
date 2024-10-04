@@ -5,7 +5,7 @@ try:
     from termcolor import colored, cprint
 except ImportError:
     print(
-        "\x1b[38;5;9mBefore running the game, install the required libraries. Read README.md to figure out how.\x1b[0m"
+        "\x1b[38;5;9mPlease install the required libraries. Read README.md to figure out how.\x1b[0m"
     )
     quit()
 from events import select
@@ -14,46 +14,6 @@ from ship import Ship
 import datetime
 import sys
 import os
-
-
-def test():
-    clearc()
-    cprint("Testing your terminal's speed...", "light_magenta")
-    time.sleep(1)
-    words = "testing..."
-    start = datetime.datetime.now()
-    stop = start + datetime.timedelta(0, 1.7)
-    failed = False
-    for char in words:
-        if datetime.datetime.now() > stop:
-            fprint("Speed test FAILED", "red")
-            failed = True
-            choice = input(
-                "Terminal is not fast enough for this game! Do you want to [c]ontinue (not recommended for the best experience) or [e]xit?"
-            ).lower()
-            if choice == "c" or choice == "continue":
-                fprint("Continuing...", select=True)
-            else:
-                cprint(
-                    "Good choice, try freeing up your memory, your terminal is slow."
-                )
-                quit()
-            break
-        colored_char = char
-        sys.stdout.write(colored_char)
-        sleep_time = 0.15
-
-        sys.stdout.flush()
-        time.sleep(sleep_time)
-    if not failed:
-        fprint("Speed test passed!")
-
-
-# set to true
-should_check_speed = False
-
-if should_check_speed:
-    test()
 
 
 def main():
@@ -141,7 +101,7 @@ def menu():
     cprint(f"{'The Stellaris Rift':^25}", "blue")
     cprint("=" * 25)
     print()
-    print(colored(f" Choose an option", "yellow"))
+    print(colored(f" Select an option", "yellow"))
     choice = select(["PLAY", "CREDITS", "QUIT"])
 
     clearc()
